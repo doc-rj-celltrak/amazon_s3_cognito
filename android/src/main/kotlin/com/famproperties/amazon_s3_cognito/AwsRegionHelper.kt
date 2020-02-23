@@ -102,6 +102,43 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
     }
 
     @Throws(UnsupportedEncodingException::class)
+    fun downloadImage(image: File): String {
+
+        initRegion()
+
+        val credentialsProvider = CognitoCachingCredentialsProvider(context, IDENTITY_POOL_ID, region1)
+        TransferNetworkLossHandler.getInstance(context.applicationContext)
+
+        val amazonS3Client = AmazonS3Client(credentialsProvider)
+        amazonS3Client.setRegion(com.amazonaws.regions.Region.getRegion(subRegion1))
+        transferUtility = TransferUtility(amazonS3Client, context)
+
+        nameOfUploadedFile = IMAGE_NAME;
+
+        val transferObserver = transferUtility.download(BUCKET_NAME, nameOfUploadedFile, image)
+
+        transferObserver.setTransferListener(object : TransferListener {
+            override fun onStateChanged(id: Int, state: TransferState) {
+                if (state == TransferState.COMPLETED) {
+                    onUploadCompleteListener.onUploadComplete(image.absolutePath)
+                }
+                if (state == TransferState.FAILED ||  state == TransferState.WAITING_FOR_NETWORK) {
+                    onUploadCompleteListener.onFailed()
+                }
+            }
+
+            override fun onProgressChanged(id: Int, bytesCurrent: Long, bytesTotal: Long) {}
+            override fun onError(id: Int, ex: Exception) {
+                onUploadCompleteListener.onFailed()
+                Log.e(TAG, "error in upload id [ " + id + " ] : " + ex.message)
+
+            }
+        })
+        return uploadedUrl
+    }
+
+
+    @Throws(UnsupportedEncodingException::class)
     fun clean(filePath: String): String {
         return filePath.replace("[^.A-Za-z0-9]".toRegex(), "")
     }
