@@ -2,7 +2,7 @@ import Flutter
 import UIKit
 import AWSS3
 import AWSCore
-
+import AWSCognitoIdentityProvider
 
 public class SwiftAmazonS3CognitoPlugin: NSObject, FlutterPlugin {
 
