@@ -138,12 +138,13 @@ public class SwiftAmazonS3CognitoPlugin: NSObject, FlutterPlugin {
           uploadRequest?.body = fileUrl as URL
           //uploadRequest?.acl = .publicReadWrite
 
-          let credentialsProvider = AWSCognitoCredentialsProvider(
-              regionType: region1,
-              identityPoolId: identity!)
-          let configuration = AWSServiceConfiguration(
-              region: subRegion1,
-              credentialsProvider: credentialsProvider)
+          // todo: pass user pool and app client ids through platform channel
+          let serviceConfiguration = AWSServiceConfiguration(region: region1, credentialsProvider: nil)
+          let userPoolConfiguration = AWSCognitoIdentityUserPoolConfiguration(clientId: "6v3lhsodatdg59cto58ffqq6k", clientSecret: nil, poolId: "us-east-1_WPWx8YcZp")
+          AWSCognitoIdentityUserPool.register(with: serviceConfiguration, userPoolConfiguration: userPoolConfiguration, forKey: "UserPool")
+          let pool = AWSCognitoIdentityUserPool(forKey: "UserPool")
+          let credentialsProvider = AWSCognitoCredentialsProvider(regionType: region1, identityPoolId: identity!, identityProviderManager:pool)
+          let configuration = AWSServiceConfiguration(region: subRegion1, credentialsProvider: credentialsProvider)
           AWSServiceManager.default().defaultServiceConfiguration = configuration
 
 
