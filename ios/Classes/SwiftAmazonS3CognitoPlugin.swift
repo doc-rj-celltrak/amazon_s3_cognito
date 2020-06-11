@@ -131,10 +131,42 @@ public class SwiftAmazonS3CognitoPlugin: NSObject, FlutterPlugin {
           var imageAmazonUrl = ""
           let fileUrl = NSURL(fileURLWithPath: imagePath!)
 
+
           let uploadRequest = AWSS3TransferManagerUploadRequest()
           uploadRequest?.bucket = bucket
           uploadRequest?.key = fileName
-          //uploadRequest?.contentType = "image/jpeg"
+
+
+        var contentType = "image/jpeg"
+        if(contentTypeParam != nil &&
+            contentTypeParam!.count > 0){
+            contentType = contentTypeParam!
+        }
+
+        if(contentTypeParam == nil || contentTypeParam!.count == 0 &&  fileName!.contains(".")){
+                       var index = fileName!.lastIndex(of: ".")
+                       index = fileName!.index(index!, offsetBy: 1)
+                       if(index != nil){
+                           let extention = String(fileName![index!...])
+                           print("extension"+extention);
+                           if(extention.lowercased().contains("png") ||
+                           extention.lowercased().contains("jpg") ||
+                               extention.lowercased().contains("jpeg") ){
+                               contentType = "image/"+extention
+                           }else{
+
+                            if(extention.lowercased().contains("pdf")){
+                                contentType = "application/pdf"
+                                }else{
+                                contentType = "application/*"
+                                }
+
+                           }
+
+                       }
+                   }
+
+          uploadRequest?.contentType = contentType
           uploadRequest?.body = fileUrl as URL
           //uploadRequest?.acl = .publicReadWrite
 
