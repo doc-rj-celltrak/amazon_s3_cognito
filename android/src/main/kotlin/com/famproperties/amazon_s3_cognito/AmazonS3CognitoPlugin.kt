@@ -32,6 +32,9 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
       val region = call.argument<String>("region")
       val subRegion = call.argument<String>("subRegion")
 
+      val userPoolId = call.argument<String>("userPoolId")
+      val appClientId = call.argument<String>("appClientId")
+      val authToken = call.argument<String>("authToken")
 
       if (call.method.equals("uploadImageToAmazon")) {
           val file = File(filePath)
@@ -75,7 +78,7 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
                       System.out.println("\n✅ upload complete: $imageUrl")
                       result.success(imageUrl)
                   }
-              }, bucket!!, identity!!, fileName!!, region!!, subRegion!!)
+              }, bucket!!, identity!!, fileName!!, region!!, subRegion!!, userPoolId!!, authToken!!)
               awsRegionHelper!!.uploadImage(file)
           } catch (e: UnsupportedEncodingException) {
               e.printStackTrace()
@@ -99,7 +102,7 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
                       System.out.println("\n✅ download complete: $imageUrl")
                       result.success(imageUrl)
                   }
-              }, bucket!!, identity!!, fileName!!, region!!, subRegion!!)
+              }, bucket!!, identity!!, fileName!!, region!!, subRegion!!, userPoolId!!, authToken!!)
               awsRegionHelper!!.downloadImage(file)
           } catch (e: UnsupportedEncodingException) {
               e.printStackTrace()
@@ -128,7 +131,7 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
 
                       }
                   }
-              }, bucket!!, identity!!, fileName!!, region!!, subRegion!!)
+              }, bucket!!, identity!!, fileName!!, region!!, subRegion!!, userPoolId!!, authToken!!)
               awsRegionHelper!!.deleteImage()
           } catch (e: UnsupportedEncodingException) {
               e.printStackTrace()

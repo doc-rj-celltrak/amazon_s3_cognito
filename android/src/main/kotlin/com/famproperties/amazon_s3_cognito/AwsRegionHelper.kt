@@ -14,18 +14,22 @@ import java.io.UnsupportedEncodingException
 
 class AwsRegionHelper(private val context: Context, private val onUploadCompleteListener: OnUploadCompleteListener,
                       private val BUCKET_NAME: String, private val IDENTITY_POOL_ID: String,
-                      private val IMAGE_NAME: String,private val REGION: String, private val SUB_REGION: String) {
+                      private val IMAGE_NAME: String, private val REGION: String, private val SUB_REGION: String,
+                      private val USER_POOL_ID: String, private val AUTH_TOKEN: String) {
 
     private var transferUtility: TransferUtility
     private var nameOfUploadedFile: String? = null
     private var region1:Regions = Regions.DEFAULT_REGION
     private var subRegion1:Regions = Regions.DEFAULT_REGION
 
-
     init {
-
         initRegion()
+
+        val logins: Map<String, String> =
+                mapOf("cognito-idp."+region1.getName()+".amazonaws.com/"+USER_POOL_ID to AUTH_TOKEN)
         val credentialsProvider = CognitoCachingCredentialsProvider(context, IDENTITY_POOL_ID, region1)
+        credentialsProvider.setLogins(logins)
+
         val amazonS3Client = AmazonS3Client(credentialsProvider)
         amazonS3Client.setRegion(com.amazonaws.regions.Region.getRegion(subRegion1))
         TransferNetworkLossHandler.getInstance(context.applicationContext)
@@ -40,11 +44,9 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
         //return  ""+key
     }
 
-    private fun initRegion(){
-
+    private fun initRegion() {
         region1 = getRegionFor(REGION)
         subRegion1 = getRegionFor(SUB_REGION)
-
     }
 
     @Throws(UnsupportedEncodingException::class)

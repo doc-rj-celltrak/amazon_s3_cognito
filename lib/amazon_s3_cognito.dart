@@ -31,6 +31,9 @@ class AmazonS3Cognito {
     String imageName,
     String region,
     String subRegion,
+    String userPoolId,
+    String appClientId,
+    String authToken,
   ) async {
     final Map<String, dynamic> params = <String, dynamic>{
       'filePath': filepath,
@@ -38,7 +41,10 @@ class AmazonS3Cognito {
       'identity': identity,
       'imageName': imageName,
       'region': region,
-      'subRegion': subRegion
+      'subRegion': subRegion,
+      'userPoolId': userPoolId,
+      'appClientId': appClientId,
+      'authToken': authToken,
     };
     final String imagePath = await _channel.invokeMethod('uploadImage', params);
     return imagePath;
