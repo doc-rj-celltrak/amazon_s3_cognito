@@ -25,10 +25,9 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
     init {
         initRegion()
 
-        val logins: Map<String, String> =
-                mapOf("cognito-idp."+region1.getName()+".amazonaws.com/"+USER_POOL_ID to AUTH_TOKEN)
         val credentialsProvider = CognitoCachingCredentialsProvider(context, IDENTITY_POOL_ID, region1)
-        credentialsProvider.setLogins(logins)
+        credentialsProvider.logins =
+                mapOf("cognito-idp."+region1.getName()+".amazonaws.com/"+USER_POOL_ID to AUTH_TOKEN)
 
         val amazonS3Client = AmazonS3Client(credentialsProvider)
         amazonS3Client.setRegion(com.amazonaws.regions.Region.getRegion(subRegion1))
@@ -69,18 +68,7 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
 
     @Throws(UnsupportedEncodingException::class)
     fun uploadImage(image: File): String {
-
-        initRegion()
-
-        val credentialsProvider = CognitoCachingCredentialsProvider(context, IDENTITY_POOL_ID, region1)
-        TransferNetworkLossHandler.getInstance(context.applicationContext)
-
-        val amazonS3Client = AmazonS3Client(credentialsProvider)
-        amazonS3Client.setRegion(com.amazonaws.regions.Region.getRegion(subRegion1))
-        transferUtility = TransferUtility(amazonS3Client, context)
-
         nameOfUploadedFile = IMAGE_NAME;
-
         val transferObserver = transferUtility.upload(BUCKET_NAME, nameOfUploadedFile, image)
 
         transferObserver.setTransferListener(object : TransferListener {
@@ -97,7 +85,6 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
             override fun onError(id: Int, ex: Exception) {
                 onUploadCompleteListener.onFailed()
                 Log.e(TAG, "error in upload id [ " + id + " ] : " + ex.message)
-
             }
         })
         return uploadedUrl
@@ -105,18 +92,7 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
 
     @Throws(UnsupportedEncodingException::class)
     fun downloadImage(image: File): String {
-
-        initRegion()
-
-        val credentialsProvider = CognitoCachingCredentialsProvider(context, IDENTITY_POOL_ID, region1)
-        TransferNetworkLossHandler.getInstance(context.applicationContext)
-
-        val amazonS3Client = AmazonS3Client(credentialsProvider)
-        amazonS3Client.setRegion(com.amazonaws.regions.Region.getRegion(subRegion1))
-        transferUtility = TransferUtility(amazonS3Client, context)
-
         nameOfUploadedFile = IMAGE_NAME;
-
         val transferObserver = transferUtility.download(BUCKET_NAME, nameOfUploadedFile, image)
 
         transferObserver.setTransferListener(object : TransferListener {
@@ -133,7 +109,6 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
             override fun onError(id: Int, ex: Exception) {
                 onUploadCompleteListener.onFailed()
                 Log.e(TAG, "error in upload id [ " + id + " ] : " + ex.message)
-
             }
         })
         return uploadedUrl
