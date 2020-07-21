@@ -9,6 +9,7 @@ import com.amazonaws.mobileconnectors.s3.transferutility.*
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.S3ClientOptions
 import java.io.File
 import java.io.UnsupportedEncodingException
 
@@ -31,6 +32,8 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
                 mapOf("cognito-idp."+region1.getName()+".amazonaws.com/"+USER_POOL_ID to AUTH_TOKEN)
 
         val amazonS3Client = AmazonS3Client(credentialsProvider, Region.getRegion(subRegion1))
+        // skip md5 integrity check, which always fails despite successful image uploads
+        amazonS3Client.setS3ClientOptions(S3ClientOptions.builder().skipContentMd5Check(true).build())
         TransferNetworkLossHandler.getInstance(context.applicationContext)
 
         transferUtility = TransferUtility.builder().s3Client(amazonS3Client).context(context).build()
