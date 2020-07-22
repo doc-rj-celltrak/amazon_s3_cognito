@@ -1,8 +1,10 @@
 package com.famproperties.amazon_s3_cognito
 
+import java.io.File
+import java.io.UnsupportedEncodingException
+
 import android.content.Context
 import android.util.Log
-
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider
 import com.amazonaws.mobileconnectors.s3.transferutility.*
@@ -10,14 +12,11 @@ import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.S3ClientOptions
-import java.io.File
-import java.io.UnsupportedEncodingException
-
 
 class AwsRegionHelper(private val context: Context, private val onUploadCompleteListener: OnUploadCompleteListener,
                       private val BUCKET_NAME: String, private val IDENTITY_POOL_ID: String,
                       private val IMAGE_NAME: String, private val REGION: String, private val SUB_REGION: String,
-                      private val USER_POOL_ID: String, private val AUTH_TOKEN: String) {
+                      USER_POOL_ID: String, AUTH_TOKEN: String) {
 
     private var transferUtility: TransferUtility
     private var nameOfUploadedFile: String? = null
@@ -68,7 +67,7 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
 
     @Throws(UnsupportedEncodingException::class)
     fun uploadImage(image: File): String {
-        nameOfUploadedFile = IMAGE_NAME;
+        nameOfUploadedFile = IMAGE_NAME
         val transferObserver = transferUtility.upload(BUCKET_NAME, nameOfUploadedFile, image)
 
         transferObserver.setTransferListener(object : TransferListener {
@@ -77,13 +76,13 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
                     onUploadCompleteListener.onUploadComplete(getUploadedUrl(nameOfUploadedFile))
                 }
                 if (state == TransferState.FAILED ||  state == TransferState.WAITING_FOR_NETWORK) {
-                    onUploadCompleteListener.onFailed()
+                    onUploadCompleteListener.onFailed(Exception(state.toString()))
                 }
             }
 
             override fun onProgressChanged(id: Int, bytesCurrent: Long, bytesTotal: Long) {}
             override fun onError(id: Int, ex: Exception) {
-                onUploadCompleteListener.onFailed()
+                onUploadCompleteListener.onFailed(ex)
                 Log.e(TAG, "error in upload id [ " + id + " ] : " + ex.message)
             }
         })
@@ -92,7 +91,7 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
 
     @Throws(UnsupportedEncodingException::class)
     fun downloadImage(image: File): String {
-        nameOfUploadedFile = IMAGE_NAME;
+        nameOfUploadedFile = IMAGE_NAME
         val transferObserver = transferUtility.download(BUCKET_NAME, nameOfUploadedFile, image)
 
         transferObserver.setTransferListener(object : TransferListener {
@@ -101,13 +100,13 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
                     onUploadCompleteListener.onUploadComplete(image.absolutePath)
                 }
                 if (state == TransferState.FAILED ||  state == TransferState.WAITING_FOR_NETWORK) {
-                    onUploadCompleteListener.onFailed()
+                    onUploadCompleteListener.onFailed(Exception(state.toString()))
                 }
             }
 
             override fun onProgressChanged(id: Int, bytesCurrent: Long, bytesTotal: Long) {}
             override fun onError(id: Int, ex: Exception) {
-                onUploadCompleteListener.onFailed()
+                onUploadCompleteListener.onFailed(ex)
                 Log.e(TAG, "error in upload id [ " + id + " ] : " + ex.message)
             }
         })
@@ -121,7 +120,7 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
 
     interface OnUploadCompleteListener {
         fun onUploadComplete(imageUrl: String)
-        fun onFailed()
+        fun onFailed(exception: Exception)
     }
 
     companion object {
@@ -130,53 +129,30 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
     }
 
     private fun  getRegionFor(name:String):Regions {
-        if (name == "US_EAST_1") {
-            return Regions.US_EAST_1
-        } else if(name == "AP_SOUTHEAST_1") {
-            return Regions.AP_SOUTHEAST_1
-        } else if(name == "US_EAST_2") {
-            return Regions.US_EAST_2
-        } else if(name == "EU_WEST_1") {
-            return Regions.EU_WEST_1
-        } else if(name == "CA_CENTRAL_1") {
-            return Regions.CA_CENTRAL_1
-        } else if(name == "CN_NORTH_1") {
-            return Regions.CN_NORTH_1
-        } else if(name == "CN_NORTHWEST_1") {
-            return Regions.CN_NORTHWEST_1
-        } else if(name == "EU_CENTRAL_1") {
-            return Regions.EU_CENTRAL_1
-        } else if(name == "EU_WEST_2"){
-            return Regions.EU_WEST_2
-        } else if(name == "EU_WEST_3") {
-            return Regions.EU_WEST_3
-        } else if(name == "SA_EAST_1") {
-            return Regions.SA_EAST_1
-        } else if(name == "US_WEST_1") {
-            return Regions.US_WEST_1
-        } else if(name == "US_WEST_2") {
-            return Regions.US_WEST_2
-        } else if(name == "AP_NORTHEAST_1") {
-            return Regions.AP_NORTHEAST_1
-        } else if(name == "AP_NORTHEAST_2") {
-            return Regions.AP_NORTHEAST_2
-        } else if(name == "AP_SOUTHEAST_1") {
-            return Regions.AP_SOUTHEAST_1
-        } else if(name == "AP_SOUTHEAST_2") {
-            return Regions.AP_SOUTHEAST_2
-        } else if(name == "AP_SOUTH_1") {
-            return Regions.AP_SOUTH_1
-        } else if(name == "ME_SOUTH_1") {
-            return Regions.ME_SOUTH_1
-        } else if(name == "AP_EAST_1") {
-            return Regions.AP_EAST_1
-        } else if(name == "EU_NORTH_1") {
-            return Regions.EU_NORTH_1
-        } else if(name == "US_GOV_EAST_1") {
-            return Regions.US_GOV_EAST_1
-        } else if(name == "us-gov-west-1") {
-            return Regions.GovCloud
+        return when (name) {
+            "US_EAST_1" -> Regions.US_EAST_1
+            "US_EAST_2" -> Regions.US_EAST_2
+            "EU_WEST_1" -> Regions.EU_WEST_1
+            "CA_CENTRAL_1" -> Regions.CA_CENTRAL_1
+            "CN_NORTH_1" -> Regions.CN_NORTH_1
+            "CN_NORTHWEST_1" -> Regions.CN_NORTHWEST_1
+            "EU_CENTRAL_1" -> Regions.EU_CENTRAL_1
+            "EU_WEST_2" -> Regions.EU_WEST_2
+            "EU_WEST_3" -> Regions.EU_WEST_3
+            "SA_EAST_1" -> Regions.SA_EAST_1
+            "US_WEST_1" -> Regions.US_WEST_1
+            "US_WEST_2" -> Regions.US_WEST_2
+            "AP_NORTHEAST_1" -> Regions.AP_NORTHEAST_1
+            "AP_NORTHEAST_2" -> Regions.AP_NORTHEAST_2
+            "AP_SOUTHEAST_1" -> Regions.AP_SOUTHEAST_1
+            "AP_SOUTHEAST_2" -> Regions.AP_SOUTHEAST_2
+            "AP_SOUTH_1" -> Regions.AP_SOUTH_1
+            "ME_SOUTH_1" -> Regions.ME_SOUTH_1
+            "AP_EAST_1" -> Regions.AP_EAST_1
+            "EU_NORTH_1" -> Regions.EU_NORTH_1
+            "US_GOV_EAST_1" -> Regions.US_GOV_EAST_1
+            "us-gov-west-1" -> Regions.GovCloud
+            else -> Regions.DEFAULT_REGION
         }
-        return Regions.DEFAULT_REGION
     }
 }

@@ -1,18 +1,16 @@
 package com.famproperties.amazon_s3_cognito
 
+import java.io.File
+import java.io.UnsupportedEncodingException
+import java.util.Locale
+
 import android.content.Context
-import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider
 import com.amazonaws.mobileconnectors.s3.transferutility.*
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3Client
-
-import java.io.File
-import java.io.UnsupportedEncodingException
-import java.util.Locale
 
 class AwsHelper(private val context: Context, private val onUploadCompleteListener: OnUploadCompleteListener, private val BUCKET_NAME: String, private val IDENTITY_POOL_ID: String) {
 
@@ -52,13 +50,13 @@ class AwsHelper(private val context: Context, private val onUploadCompleteListen
                     onUploadCompleteListener.onUploadComplete(getUploadedUrl(nameOfUploadedFile))
                 }
                 if (state == TransferState.FAILED) {
-                    onUploadCompleteListener.onFailed()
+                    onUploadCompleteListener.onFailed(Exception(state.toString()))
                 }
             }
 
             override fun onProgressChanged(id: Int, bytesCurrent: Long, bytesTotal: Long) {}
             override fun onError(id: Int, ex: Exception) {
-                onUploadCompleteListener.onFailed()
+                onUploadCompleteListener.onFailed(ex)
                 Log.e(TAG, "error in upload id [ " + id + " ] : " + ex.message)
             }
         })
@@ -72,7 +70,7 @@ class AwsHelper(private val context: Context, private val onUploadCompleteListen
 
     interface OnUploadCompleteListener {
         fun onUploadComplete(imageUrl: String)
-        fun onFailed()
+        fun onFailed(exception: Exception)
     }
 
     companion object {
