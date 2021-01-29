@@ -11,39 +11,15 @@ class AmazonS3Cognito {
     return version;
   }
 
-  static Future<String> uploadImage(
-      String filepath, String bucket, String identity) async {
-    final Map<String, dynamic> params = <String, dynamic>{
-      'filePath': filepath,
-      'bucket': bucket,
-      'identity': identity,
-    };
-    final String imagePath =
-        await _channel.invokeMethod('uploadImageToAmazon', params);
-    return imagePath;
-  }
-
   // uploads the file in the [filePath]
   static Future<String> upload(
     String filepath,
-    String bucket,
-    String identity,
     String imageName,
-    String region,
-    String subRegion,
-    String userPoolId,
-    String appClientId,
     String authToken,
   ) async {
     final Map<String, dynamic> params = <String, dynamic>{
       'filePath': filepath,
-      'bucket': bucket,
-      'identity': identity,
       'imageName': imageName,
-      'region': region,
-      'subRegion': subRegion,
-      'userPoolId': userPoolId,
-      'appClientId': appClientId,
       'authToken': authToken,
     };
     final String imagePath = await _channel.invokeMethod('uploadImage', params);
@@ -53,33 +29,20 @@ class AmazonS3Cognito {
   // downloads the file to the [filePath]
   static Future<String> download(
     String filepath,
-    String bucket,
-    String identity,
     String imageName,
-    String region,
-    String subRegion,
   ) async {
     final Map<String, dynamic> params = <String, dynamic>{
       'filePath': filepath,
-      'bucket': bucket,
-      'identity': identity,
       'imageName': imageName,
-      'region': region,
-      'subRegion': subRegion
     };
     final String imagePath =
         await _channel.invokeMethod('downloadImage', params);
     return imagePath;
   }
 
-  static Future<String> delete(String bucket, String identity, String imageName,
-      String region, String subRegion) async {
+  static Future<String> delete(String imageName) async {
     final Map<String, dynamic> params = <String, dynamic>{
-      'bucket': bucket,
-      'identity': identity,
       'imageName': imageName,
-      'region': region,
-      'subRegion': subRegion
     };
     final String imagePath = await _channel.invokeMethod('deleteImage', params);
     return imagePath;

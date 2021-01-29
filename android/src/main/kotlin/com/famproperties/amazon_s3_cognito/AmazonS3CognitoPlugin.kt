@@ -29,7 +29,6 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
       val authToken = call.argument<String>("authToken")
 
       when (call.method) {
-          "uploadImageToAmazon" -> {}
           "uploadImage" -> {
               val file = File(filePath!!)
               try {
