@@ -7,6 +7,7 @@ import android.content.Context
 import android.util.Log
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider
+import com.amazonaws.mobile.config.AWSConfiguration
 import com.amazonaws.mobileconnectors.s3.transferutility.*
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
@@ -14,52 +15,45 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.S3ClientOptions
 
 class AwsRegionHelper(private val context: Context, private val onUploadCompleteListener: OnUploadCompleteListener,
-                      private val BUCKET_NAME: String, private val IDENTITY_POOL_ID: String,
-                      private val IMAGE_NAME: String, private val REGION: String, private val SUB_REGION: String,
-                      USER_POOL_ID: String, AUTH_TOKEN: String) {
+                      private val IMAGE_NAME: String, AUTH_TOKEN: String) {
 
+    private var amazonS3Client: AmazonS3Client? = null
     private var transferUtility: TransferUtility
     private var nameOfUploadedFile: String? = null
-    private var region1:Regions = Regions.DEFAULT_REGION
-    private var subRegion1:Regions = Regions.DEFAULT_REGION
+    private var bucketName: String? = null
+    private var bucketUrl: String? = null
 
     init {
-        initRegion()
+        // read config from awsconfiguration.json in android/app/src/<env>/res/raw/,
+        // where <env> is one of dev, qa, uat, or prod.
+        val config = AWSConfiguration(context)
+        config.configuration = "Default"
+        val userPoolMap = config.optJsonObject("CognitoUserPool")
+        val regionName = userPoolMap.get("Region") as String
+        val userPoolId = userPoolMap.get("PoolId") as String
+        val credentialsProvider = CognitoCachingCredentialsProvider(context, AWSConfiguration(context))
+                .withLogins(mapOf("cognito-idp.$regionName.amazonaws.com/$userPoolId" to AUTH_TOKEN))
 
-        val credentialsProvider = CognitoCachingCredentialsProvider(context, IDENTITY_POOL_ID, region1)
-        credentialsProvider.logins =
-                mapOf("cognito-idp."+region1.getName()+".amazonaws.com/"+USER_POOL_ID to AUTH_TOKEN)
+        val s3Map = config.optJsonObject("S3TransferUtility")
+        val s3RegionName = s3Map.get("Region") as String
 
-        val amazonS3Client = AmazonS3Client(credentialsProvider, Region.getRegion(subRegion1))
+        bucketName = s3Map.get("Bucket") as String
+        bucketUrl = "https://s3-$s3RegionName.amazonaws.com/$bucketName"
+        amazonS3Client = AmazonS3Client(credentialsProvider, Region.getRegion(s3RegionName))
+
         // skip md5 integrity check, which always fails despite successful image uploads
-        amazonS3Client.setS3ClientOptions(S3ClientOptions.builder().skipContentMd5Check(true).build())
+        amazonS3Client?.setS3ClientOptions(S3ClientOptions.builder().skipContentMd5Check(true).build())
         TransferNetworkLossHandler.getInstance(context.applicationContext)
-
         transferUtility = TransferUtility.builder().s3Client(amazonS3Client).context(context).build()
     }
 
     private val uploadedUrl: String
-        get() = getUploadedUrl(nameOfUploadedFile)
-
-    private fun getUploadedUrl(key: String?): String {
-        return "https://s3-"+subRegion1.getName()+".amazonaws.com/"+BUCKET_NAME+"/"+key
-    }
-
-    private fun initRegion() {
-        region1 = getRegionFor(REGION)
-        subRegion1 = getRegionFor(SUB_REGION)
-    }
+        get() = "$bucketUrl/$nameOfUploadedFile"
 
     @Throws(UnsupportedEncodingException::class)
     fun deleteImage(): String {
-        initRegion()
-
-        val credentialsProvider = CognitoCachingCredentialsProvider(context, IDENTITY_POOL_ID, region1)
-        TransferNetworkLossHandler.getInstance(context.applicationContext)
-
-        val amazonS3Client = AmazonS3Client(credentialsProvider, Region.getRegion(subRegion1))
         Thread(Runnable{
-            amazonS3Client.deleteObject(BUCKET_NAME, IMAGE_NAME)
+            amazonS3Client?.deleteObject(bucketName, IMAGE_NAME)
         }).start()
         onUploadCompleteListener.onUploadComplete("Success")
         return IMAGE_NAME
@@ -68,12 +62,12 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
     @Throws(UnsupportedEncodingException::class)
     fun uploadImage(image: File): String {
         nameOfUploadedFile = IMAGE_NAME
-        val transferObserver = transferUtility.upload(BUCKET_NAME, nameOfUploadedFile, image)
+        val transferObserver = transferUtility.upload(bucketName, nameOfUploadedFile, image)
 
         transferObserver.setTransferListener(object : TransferListener {
             override fun onStateChanged(id: Int, state: TransferState) {
                 if (state == TransferState.COMPLETED) {
-                    onUploadCompleteListener.onUploadComplete(getUploadedUrl(nameOfUploadedFile))
+                    onUploadCompleteListener.onUploadComplete(uploadedUrl)
                 }
                 if (state == TransferState.FAILED ||  state == TransferState.WAITING_FOR_NETWORK) {
                     onUploadCompleteListener.onFailed(Exception(state.toString()))
@@ -92,7 +86,7 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
     @Throws(UnsupportedEncodingException::class)
     fun downloadImage(image: File): String {
         nameOfUploadedFile = IMAGE_NAME
-        val transferObserver = transferUtility.download(BUCKET_NAME, nameOfUploadedFile, image)
+        val transferObserver = transferUtility.download(bucketName, nameOfUploadedFile, image)
 
         transferObserver.setTransferListener(object : TransferListener {
             override fun onStateChanged(id: Int, state: TransferState) {

@@ -12,7 +12,6 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 class AmazonS3CognitoPlugin private constructor(private val context: Context) : MethodCallHandler {
-    private var awsHelper: AwsHelper? = null
     private var awsRegionHelper: AwsRegionHelper? = null
 
     companion object {
@@ -26,37 +25,11 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
 
   override fun onMethodCall(call: MethodCall, result: Result) {
       val filePath = call.argument<String>("filePath")
-      val bucket = call.argument<String>("bucket")
-      val identity = call.argument<String>("identity")
       val fileName = call.argument<String>("imageName")
-      val region = call.argument<String>("region")
-      val subRegion = call.argument<String>("subRegion")
-      val userPoolId = call.argument<String>("userPoolId")
-      val appClientId = call.argument<String>("appClientId")
       val authToken = call.argument<String>("authToken")
 
       when (call.method) {
-          "uploadImageToAmazon" -> {
-              val file = File(filePath!!)
-              try {
-                  awsHelper = AwsHelper(context, object : AwsHelper.OnUploadCompleteListener {
-                      override fun onFailed(exception: Exception) {
-                          print("\n❌ upload failed")
-                          try {
-                              result.error("s3.uploadImageToAmazon", exception.message!!, emptyList<String>())
-                          } catch (e: Exception) {}
-                      }
-
-                      override fun onUploadComplete(@NotNull imageUrl: String) {
-                          print("\n✅ upload complete: $imageUrl")
-                          result.success(imageUrl)
-                      }
-                  }, bucket!!, identity!!)
-                  awsHelper!!.uploadImage(file)
-              } catch (e: UnsupportedEncodingException) {
-                  e.printStackTrace()
-              }
-          }
+          "uploadImageToAmazon" -> {}
           "uploadImage" -> {
               val file = File(filePath!!)
               try {
@@ -72,7 +45,7 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
                           print("\n✅ upload complete: $imageUrl")
                           result.success(imageUrl)
                       }
-                  }, bucket!!, identity!!, fileName!!, region!!, subRegion!!, userPoolId!!, authToken!!)
+                  }, fileName!!, authToken!!)
                   awsRegionHelper!!.uploadImage(file)
               } catch (e: UnsupportedEncodingException) {
                   e.printStackTrace()
@@ -93,7 +66,7 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
                           print("\n✅ download complete: $imageUrl")
                           result.success(imageUrl)
                       }
-                  }, bucket!!, identity!!, fileName!!, region!!, subRegion!!, userPoolId!!, authToken!!)
+                  }, fileName!!, authToken!!)
                   awsRegionHelper!!.downloadImage(file)
               } catch (e: UnsupportedEncodingException) {
                   e.printStackTrace()
@@ -115,7 +88,7 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
                               result.success(imageUrl)
                           } catch (e:Exception) {}
                       }
-                  }, bucket!!, identity!!, fileName!!, region!!, subRegion!!, userPoolId!!, authToken!!)
+                  }, fileName!!, authToken!!)
                   awsRegionHelper!!.deleteImage()
               } catch (e: UnsupportedEncodingException) {
                   e.printStackTrace()
