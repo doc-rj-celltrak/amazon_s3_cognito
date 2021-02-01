@@ -39,12 +39,12 @@ public class SwiftAmazonS3CognitoPlugin: NSObject, FlutterPlugin {
     /// reads config from awsconfiguration.json in Runner/config/<env>/,
     /// where <env> is one of dev, qa, uat, or prod.
     func initConfig() {
-        let s3Config = AWSInfo().defaultServiceInfo("S3TransferUtility")
+        let s3Config = AWSInfo.default().defaultServiceInfo("S3TransferUtility")
         s3BucketName = s3Config?.infoDictionary["Bucket"] as? String
         s3RegionName = (s3Config?.infoDictionary["Region"] as? String)?.uppercased()
         s3Region = getRegion(name: s3RegionName!)
 
-        let userPoolConfig = AWSInfo().defaultServiceInfo("CognitoUserPool")
+        let userPoolConfig = AWSInfo.default().defaultServiceInfo("CognitoUserPool")
         userPoolId = userPoolConfig?.infoDictionary["PoolId"] as? String
         userPoolAppClientId = userPoolConfig?.infoDictionary["AppClientId"] as? String
         userPoolRegionName = (userPoolConfig?.infoDictionary["Region"] as? String)?.uppercased()
@@ -72,7 +72,6 @@ public class SwiftAmazonS3CognitoPlugin: NSObject, FlutterPlugin {
           let arguments = call.arguments as? NSDictionary
           let imagePath = arguments!["filePath"] as? String
           let fileName = arguments!["imageName"] as? String
-          let authToken = arguments!["authToken"] as? String
           let contentTypeParam = arguments!["contentType"] as? String
 
           var imageAmazonUrl = ""
@@ -105,6 +104,7 @@ public class SwiftAmazonS3CognitoPlugin: NSObject, FlutterPlugin {
                        }
                    }
 
+          // reference: https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-integrating-user-pools-with-identity-pools.html
           let serviceConfiguration = AWSServiceConfiguration(region: s3Region!, credentialsProvider: nil)
           let userPoolConfiguration = AWSCognitoIdentityUserPoolConfiguration(clientId: userPoolAppClientId!, clientSecret: nil, poolId: userPoolId!)
           AWSCognitoIdentityUserPool.register(with: serviceConfiguration, userPoolConfiguration: userPoolConfiguration, forKey: "UserPool")

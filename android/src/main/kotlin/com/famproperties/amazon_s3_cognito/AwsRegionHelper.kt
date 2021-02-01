@@ -30,6 +30,8 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
         val userPoolMap = config.optJsonObject("CognitoUserPool")
         val regionName = userPoolMap.get("Region") as String
         val userPoolId = userPoolMap.get("PoolId") as String
+
+        // reference: https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-integrating-user-pools-with-identity-pools.html
         val credentialsProvider = CognitoCachingCredentialsProvider(context, AWSConfiguration(context))
                 .withLogins(mapOf("cognito-idp.$regionName.amazonaws.com/$userPoolId" to AUTH_TOKEN))
 
