@@ -10,7 +10,6 @@ import com.amazonaws.auth.CognitoCachingCredentialsProvider
 import com.amazonaws.mobile.config.AWSConfiguration
 import com.amazonaws.mobileconnectors.s3.transferutility.*
 import com.amazonaws.regions.Region
-import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.S3ClientOptions
 
@@ -31,6 +30,8 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
         val userPoolMap = config.optJsonObject("CognitoUserPool")
         val regionName = userPoolMap.get("Region") as String
         val userPoolId = userPoolMap.get("PoolId") as String
+
+        // reference: https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-integrating-user-pools-with-identity-pools.html
         val credentialsProvider = CognitoCachingCredentialsProvider(context, AWSConfiguration(context))
                 .withLogins(mapOf("cognito-idp.$regionName.amazonaws.com/$userPoolId" to AUTH_TOKEN))
 
@@ -120,33 +121,5 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
     companion object {
         private val TAG = AwsRegionHelper::class.java.simpleName
         private const val URL_TEMPLATE = "https://s3.amazonaws.com/%s/%s"
-    }
-
-    private fun  getRegionFor(name:String):Regions {
-        return when (name) {
-            "US_EAST_1" -> Regions.US_EAST_1
-            "US_EAST_2" -> Regions.US_EAST_2
-            "EU_WEST_1" -> Regions.EU_WEST_1
-            "CA_CENTRAL_1" -> Regions.CA_CENTRAL_1
-            "CN_NORTH_1" -> Regions.CN_NORTH_1
-            "CN_NORTHWEST_1" -> Regions.CN_NORTHWEST_1
-            "EU_CENTRAL_1" -> Regions.EU_CENTRAL_1
-            "EU_WEST_2" -> Regions.EU_WEST_2
-            "EU_WEST_3" -> Regions.EU_WEST_3
-            "SA_EAST_1" -> Regions.SA_EAST_1
-            "US_WEST_1" -> Regions.US_WEST_1
-            "US_WEST_2" -> Regions.US_WEST_2
-            "AP_NORTHEAST_1" -> Regions.AP_NORTHEAST_1
-            "AP_NORTHEAST_2" -> Regions.AP_NORTHEAST_2
-            "AP_SOUTHEAST_1" -> Regions.AP_SOUTHEAST_1
-            "AP_SOUTHEAST_2" -> Regions.AP_SOUTHEAST_2
-            "AP_SOUTH_1" -> Regions.AP_SOUTH_1
-            "ME_SOUTH_1" -> Regions.ME_SOUTH_1
-            "AP_EAST_1" -> Regions.AP_EAST_1
-            "EU_NORTH_1" -> Regions.EU_NORTH_1
-            "US_GOV_EAST_1" -> Regions.US_GOV_EAST_1
-            "us-gov-west-1" -> Regions.GovCloud
-            else -> Regions.DEFAULT_REGION
-        }
     }
 }
