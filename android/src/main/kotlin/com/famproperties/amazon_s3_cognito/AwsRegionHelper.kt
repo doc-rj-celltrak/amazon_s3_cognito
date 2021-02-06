@@ -39,7 +39,7 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
         val s3RegionName = s3Map.get("Region") as String
 
         bucketName = s3Map.get("Bucket") as String
-        bucketUrl = "https://s3-$s3RegionName.amazonaws.com/$bucketName"
+        bucketUrl = "https://$bucketName.s3.amazonaws.com"
         amazonS3Client = AmazonS3Client(credentialsProvider, Region.getRegion(s3RegionName))
 
         // skip md5 integrity check, which always fails despite successful image uploads

@@ -15,9 +15,9 @@ This plugin allows users to upload and delete image for amazon s3 cognito
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
-  s.dependency 'AWSS3', '~> 2.19.1'
-  s.dependency 'AWSCore'
-  s.dependency 'AWSCognitoIdentityProvider'
+  s.dependency 'AWSS3', '>= 2.22.2'
+  s.dependency 'AWSCore', '>= 2.22.2'
+  s.dependency 'AWSCognitoIdentityProvider', '>= 2.22.2'
 
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '11.0'
 end

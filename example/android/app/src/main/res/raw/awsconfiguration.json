@@ -1,0 +1,45 @@
+{
+  "IdentityManager": {
+    "Default": {}
+  },
+  "CredentialsProvider": {
+    "CognitoIdentity": {
+      "Default": {
+        "PoolId": "us-east-1:4bff454a-36de-4e9e-a789-60e7ad0f17a1",
+        "Region": "us-east-1"
+      }
+    }
+  },
+  "CognitoUserPool": {
+    "Default": {
+      "PoolId": "us-east-1_fHRx057zU",
+      "AppClientId": "tcb9gp2iebvj6fsffau3qqd0o",
+      "Region": "us-east-1"
+    }
+  },
+  "Auth": {
+    "Default": {
+      "OAuth": {
+        "WebDomain": "celltrak-practitioner-v3-dev.auth.us-east-1.amazoncognito.com",
+        "AppClientId": "tcb9gp2iebvj6fsffau3qqd0o",
+        "SignInRedirectURI": "celltraksd://celltraksd.ctt.com/authmain",
+        "SignOutRedirectURI": "celltraksd://celltraksd.ctt.com/authmain",
+        "Scopes": ["openid", "email", "profile", "aws.cognito.signin.user.admin"]
+      }
+    }
+  },
+  "AppSync": {
+    "Default": {
+      "ApiUrl": "https://pqbufswr7rdgrprrtysz24mtue.appsync-api.us-east-1.amazonaws.com/graphql",
+      "Region": "us-east-1",
+      "AuthMode": "AMAZON_COGNITO_USER_POOLS",
+      "ClientDatabasePrefix": "self-directed-appsync-dev_AMAZON_COGNITO_USER_POOLS"
+    }
+  },
+  "S3TransferUtility": {
+    "Default": {
+      "Bucket": "celltrak-self-directed-promo2-dev",
+      "Region": "us-east-1"
+    }
+  }
+}
