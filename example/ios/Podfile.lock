@@ -1,16 +1,16 @@
 PODS:
   - amazon_s3_cognito (0.2.4):
-    - AWSCognitoIdentityProvider
-    - AWSCore
-    - AWSS3
+    - AWSCognitoIdentityProvider (>= 2.22.2)
+    - AWSCore (>= 2.22.2)
+    - AWSS3 (>= 2.22.2)
     - Flutter
-  - AWSCognitoIdentityProvider (2.12.2):
-    - AWSCognitoIdentityProviderASF (= 1.0.1)
-    - AWSCore (= 2.12.2)
-  - AWSCognitoIdentityProviderASF (1.0.1)
-  - AWSCore (2.12.2)
-  - AWSS3 (2.12.2):
-    - AWSCore (= 2.12.2)
+  - AWSCognitoIdentityProvider (2.22.2):
+    - AWSCognitoIdentityProviderASF (= 2.22.2)
+    - AWSCore (= 2.22.2)
+  - AWSCognitoIdentityProviderASF (2.22.2)
+  - AWSCore (2.22.2)
+  - AWSS3 (2.22.2):
+    - AWSCore (= 2.22.2)
   - Flutter (1.0.0)
 
 DEPENDENCIES:
@@ -21,7 +21,6 @@ SPEC REPOS:
   https://cdn.cocoapods.org/:
     - AWSCognitoIdentityProvider
     - AWSCognitoIdentityProviderASF
-  https://github.com/CocoaPods/Specs.git:
     - AWSCore
     - AWSS3
 
@@ -32,13 +31,13 @@ EXTERNAL SOURCES:
     :path: Flutter
 
 SPEC CHECKSUMS:
-  amazon_s3_cognito: 123d7b891d8a06991d5773f0f2f996b1888ef436
-  AWSCognitoIdentityProvider: 5ac7b7af7877e7a47585c08d6a0ef58bcd6314b6
-  AWSCognitoIdentityProviderASF: f94f1a502e72ef3d0a1de93e10bf7a79c8698118
-  AWSCore: bdc0933bcb1aca4a9af3352a9e6ec75b339faf71
-  AWSS3: 3ab1e1b25d3522d7745efd2a57a98a86d7524bd5
+  amazon_s3_cognito: 23c7e1946953cb8b25dea08f322e3efdbd9a3ed9
+  AWSCognitoIdentityProvider: 89fd21fdfc22a33ff86520d2905eac9201a55b69
+  AWSCognitoIdentityProviderASF: a5c421ef17e27c226e4d780a24ac3af675cbf57a
+  AWSCore: df612cf038f1230dfae4695feb8497c512f1143a
+  AWSS3: 0d9d77caca819d7289e05ac5bf161943094ab2fa
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
 
 PODFILE CHECKSUM: c34e2287a9ccaa606aeceab922830efb9a6ff69a
 
-COCOAPODS: 1.10.0
+COCOAPODS: 1.10.1
