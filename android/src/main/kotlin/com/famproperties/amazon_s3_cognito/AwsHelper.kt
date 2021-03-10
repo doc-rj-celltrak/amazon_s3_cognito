@@ -13,29 +13,27 @@ import com.amazonaws.regions.Region
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.S3ClientOptions
 
-class AwsRegionHelper(private val context: Context, private val onUploadCompleteListener: OnUploadCompleteListener,
-                      private val IMAGE_NAME: String, AUTH_TOKEN: String) {
+class AwsHelper(context: Context,
+                awsConfig: AWSConfiguration,
+                authToken: String,
+                private val imageName: String,
+                private val onUploadCompleteListener: OnUploadCompleteListener) {
 
     private var amazonS3Client: AmazonS3Client? = null
     private var transferUtility: TransferUtility
-    private var nameOfUploadedFile: String? = null
     private var bucketName: String? = null
     private var bucketUrl: String? = null
 
     init {
-        // read config from awsconfiguration.json in android/app/src/<env>/res/raw/,
-        // where <env> is one of dev, qa, uat, or prod.
-        val config = AWSConfiguration(context)
-        config.configuration = "Default"
-        val userPoolMap = config.optJsonObject("CognitoUserPool")
+        val userPoolMap = awsConfig.optJsonObject("CognitoUserPool")
         val regionName = userPoolMap.get("Region") as String
         val userPoolId = userPoolMap.get("PoolId") as String
 
         // reference: https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-integrating-user-pools-with-identity-pools.html
-        val credentialsProvider = CognitoCachingCredentialsProvider(context, AWSConfiguration(context))
-                .withLogins(mapOf("cognito-idp.$regionName.amazonaws.com/$userPoolId" to AUTH_TOKEN))
+        val credentialsProvider = CognitoCachingCredentialsProvider(context, awsConfig)
+                .withLogins(mapOf("cognito-idp.$regionName.amazonaws.com/$userPoolId" to authToken))
 
-        val s3Map = config.optJsonObject("S3TransferUtility")
+        val s3Map = awsConfig.optJsonObject("S3TransferUtility")
         val s3RegionName = s3Map.get("Region") as String
 
         bucketName = s3Map.get("Bucket") as String
@@ -49,22 +47,20 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
     }
 
     private val uploadedUrl: String
-        get() = "$bucketUrl/$nameOfUploadedFile"
+        get() = "$bucketUrl/$imageName"
 
     @Throws(UnsupportedEncodingException::class)
     fun deleteImage(): String {
         Thread(Runnable{
-            amazonS3Client?.deleteObject(bucketName, IMAGE_NAME)
+            amazonS3Client?.deleteObject(bucketName, imageName)
         }).start()
         onUploadCompleteListener.onUploadComplete("Success")
-        return IMAGE_NAME
+        return imageName
     }
 
     @Throws(UnsupportedEncodingException::class)
     fun uploadImage(image: File): String {
-        nameOfUploadedFile = IMAGE_NAME
-        val transferObserver = transferUtility.upload(bucketName, nameOfUploadedFile, image)
-
+        val transferObserver = transferUtility.upload(bucketName, imageName, image)
         transferObserver.setTransferListener(object : TransferListener {
             override fun onStateChanged(id: Int, state: TransferState) {
                 if (state == TransferState.COMPLETED) {
@@ -86,9 +82,7 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
 
     @Throws(UnsupportedEncodingException::class)
     fun downloadImage(image: File): String {
-        nameOfUploadedFile = IMAGE_NAME
-        val transferObserver = transferUtility.download(bucketName, nameOfUploadedFile, image)
-
+        val transferObserver = transferUtility.download(bucketName, imageName, image)
         transferObserver.setTransferListener(object : TransferListener {
             override fun onStateChanged(id: Int, state: TransferState) {
                 if (state == TransferState.COMPLETED) {
@@ -108,18 +102,12 @@ class AwsRegionHelper(private val context: Context, private val onUploadComplete
         return uploadedUrl
     }
 
-    @Throws(UnsupportedEncodingException::class)
-    fun clean(filePath: String): String {
-        return filePath.replace("[^.A-Za-z0-9]".toRegex(), "")
-    }
-
     interface OnUploadCompleteListener {
         fun onUploadComplete(imageUrl: String)
         fun onFailed(exception: Exception)
     }
 
     companion object {
-        private val TAG = AwsRegionHelper::class.java.simpleName
-        private const val URL_TEMPLATE = "https://s3.amazonaws.com/%s/%s"
+        private val TAG = AwsHelper::class.java.simpleName
     }
 }
