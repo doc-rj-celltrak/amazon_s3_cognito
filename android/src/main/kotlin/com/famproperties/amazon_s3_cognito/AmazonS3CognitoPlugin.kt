@@ -11,6 +11,11 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 import com.amazonaws.mobile.config.AWSConfiguration
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class AmazonS3CognitoPlugin private constructor(private val context: Context) : MethodCallHandler {
     // read config from awsconfiguration.json in android/app/src/<env>/res/raw/,
@@ -35,13 +40,27 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
         when (call.method) {
             "uploadImage" -> {
                 val file = File(filePath!!)
+                if (!file.exists()) {
+                    result.error(S3Error.fileNotFound.toString(), "$filePath not found", emptyList<String>())
+                    return;
+                }
+
                 try {
                     awsHelper = AwsHelper(context, awsConfig,
                             authToken!!, fileName!!, object : AwsHelper.OnUploadCompleteListener {
                         override fun onFailed(exception: Exception) {
-                            print("\n❌ upload failed")
+
+                            print("\n❌ upload failed ${exception.rootCause}")
                             try {
-                                result.error("s3.uploadImage", exception.message!!, emptyList<String>())
+                                val rootCause = exception.rootCause
+                                if (rootCause is SocketTimeoutException || rootCause is InterruptedIOException) {
+                                    result.error(S3Error.requestTimedOut.toString(), exception.message, emptyList<String>())
+                                } else if (rootCause is IOException || // Includes: UnknownHostException
+                                        exception.message == TransferState.WAITING_FOR_NETWORK.toString()) { // AwsHelper treats this as a failure
+                                    result.error(S3Error.requestOffline.toString(), exception.message, emptyList<String>())
+                                } else {
+                                    result.error(S3Error.unknown.toString(), exception.message, emptyList<String>())
+                                }
                             } catch (e: Exception) {
                             }
                         }
@@ -108,3 +127,28 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
         }
     }
 }
+
+enum class S3Error {
+    // Timed out. Could be offline, server could be stalled, etc. Should retry
+    requestTimedOut,
+
+    // Temporarily offline, obviously should retry
+    requestOffline,
+
+    // The file is gone, this is a permanent error, no retries
+    fileNotFound,
+
+    // Lots of potential issues, hopefully transient, so we'll retry
+    unknown
+}
+
+val Exception.rootCause : Throwable
+    get() {
+        var previousCause: Throwable = this
+        var nextCause = this.cause
+        while(nextCause != null) {
+            previousCause = nextCause
+            nextCause = nextCause.cause
+        }
+        return previousCause
+    }
