@@ -132,6 +132,7 @@ public class SwiftAmazonS3CognitoPlugin: NSObject, FlutterPlugin {
                 imageAmazonUrl = "https://\(self.s3BucketName!).s3.amazonaws.com/\(fileName!)"
                 print("✅ Upload complete: (\(imageAmazonUrl))")
                 result(imageAmazonUrl)
+                
             } else {
                 print("❌ Unexpected empty result.")
                 result(S3Error.emptyResponse.asFlutterError)
