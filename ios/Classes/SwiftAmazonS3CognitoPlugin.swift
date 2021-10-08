@@ -120,25 +120,32 @@ public class SwiftAmazonS3CognitoPlugin: NSObject, FlutterPlugin {
             }
         }
         
-        s3TransferUtility?.uploadFile(fileUrl as URL, bucket: s3BucketName!, key: fileName!, contentType: contentType, expression: nil, completionHandler: nil).continueWith {
-            (task) -> AnyObject? in
-            
-            if let error = task.error {
+        s3TransferUtility?.uploadFile(fileUrl as URL, bucket: s3BucketName!, key: fileName!, contentType: contentType, expression: nil) {
+            (task, error) in
+
+            if let error = error {
                 print("❌ Upload did fail: (\(error))")
                 result(S3Error(error: error).asFlutterError)
-            }
-            
-            else if (task.result != nil) {
-                imageAmazonUrl = "https://\(self.s3BucketName!).s3.amazonaws.com/\(fileName!)"
-                print("✅ Upload complete: (\(imageAmazonUrl))")
-                result(imageAmazonUrl)
-                
             } else {
-                print("❌ Unexpected empty result.")
-                result(S3Error.emptyResponse.asFlutterError)
+                print("Received result: \(task.status.rawValue)")
+
+                switch task.status {
+                
+                case .inProgress, .paused, .waiting, .unknown:
+                    // shouldn't ever see these since we are in the completion handler but
+                    // if we do we ignore since we only care about completion
+                    break
+                case .completed :
+                    imageAmazonUrl = "https://\(self.s3BucketName!).s3.amazonaws.com/\(fileName!)"
+                    print("✅ Upload complete: (\(imageAmazonUrl))")
+                    result(imageAmazonUrl)
+                case .error, .cancelled:
+                    print("❌ Upload did fail")
+                    result(S3Error.unknown.asFlutterError)
+                @unknown default:
+                    fatalError("Unknown status in file upload")
+                }
             }
-            
-            return nil
         }
     }
     
@@ -247,9 +254,6 @@ enum S3Error: String, Error {
     case serverError
     // We got a redirect. assuming it's transient so retryable.
     case redirection
-    // since we got an otherwise non-error response hopefully it's all good, so no retry
-    case emptyResponse
-    
     // Random exception in upload task. Seems like a bug would cause, so we'll retry
     case unknown
     
