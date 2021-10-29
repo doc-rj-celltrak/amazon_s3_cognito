@@ -1,17 +1,19 @@
 package com.famproperties.amazon_s3_cognito
 
-import java.io.File
-import java.io.UnsupportedEncodingException
-
 import android.content.Context
 import android.util.Log
-
 import com.amazonaws.auth.CognitoCachingCredentialsProvider
 import com.amazonaws.mobile.config.AWSConfiguration
-import com.amazonaws.mobileconnectors.s3.transferutility.*
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferNetworkLossHandler
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility
 import com.amazonaws.regions.Region
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.S3ClientOptions
+import com.amazonaws.services.s3.model.ObjectMetadata
+import java.io.File
+import java.io.UnsupportedEncodingException
 
 class AwsHelper(context: Context,
                 awsConfig: AWSConfiguration,
@@ -51,7 +53,7 @@ class AwsHelper(context: Context,
 
     @Throws(UnsupportedEncodingException::class)
     fun deleteImage(): String {
-        Thread(Runnable{
+        Thread(Runnable {
             amazonS3Client?.deleteObject(bucketName, imageName)
         }).start()
         onUploadCompleteListener.onUploadComplete("Success")
@@ -60,13 +62,14 @@ class AwsHelper(context: Context,
 
     @Throws(UnsupportedEncodingException::class)
     fun uploadImage(image: File): String {
-        val transferObserver = transferUtility.upload(bucketName, imageName, image)
-        transferObserver.setTransferListener(object : TransferListener {
+
+        val transferObserver = transferUtility.upload(bucketName, imageName, image, ObjectMetadata(), null, object : TransferListener {
             override fun onStateChanged(id: Int, state: TransferState) {
+                print("State changed to $state")
                 if (state == TransferState.COMPLETED) {
                     onUploadCompleteListener.onUploadComplete(uploadedUrl)
                 }
-                if (state == TransferState.FAILED ||  state == TransferState.WAITING_FOR_NETWORK) {
+                if (state == TransferState.FAILED) {// || state == TransferState.WAITING_FOR_NETWORK) {
                     onUploadCompleteListener.onFailed(Exception(state.toString()))
                 }
             }
@@ -77,6 +80,7 @@ class AwsHelper(context: Context,
                 Log.e(TAG, "error in upload id [ " + id + " ] : " + ex.message)
             }
         })
+        print("Uploading image ${transferObserver.state}")
         return uploadedUrl
     }
 
@@ -88,7 +92,7 @@ class AwsHelper(context: Context,
                 if (state == TransferState.COMPLETED) {
                     onUploadCompleteListener.onUploadComplete(image.absolutePath)
                 }
-                if (state == TransferState.FAILED ||  state == TransferState.WAITING_FOR_NETWORK) {
+                if (state == TransferState.FAILED || state == TransferState.WAITING_FOR_NETWORK) {
                     onUploadCompleteListener.onFailed(Exception(state.toString()))
                 }
             }
