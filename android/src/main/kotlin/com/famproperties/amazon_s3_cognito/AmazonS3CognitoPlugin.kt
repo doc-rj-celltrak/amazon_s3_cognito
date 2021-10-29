@@ -1,21 +1,21 @@
 package com.famproperties.amazon_s3_cognito
 
-import java.io.File
-import java.io.UnsupportedEncodingException
-import org.jetbrains.annotations.NotNull
 import android.content.Context
-
+import android.content.Intent
+import com.amazonaws.mobile.config.AWSConfiguration
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferService
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.PluginRegistry.Registrar
-
-import com.amazonaws.mobile.config.AWSConfiguration
-import com.amazonaws.mobileconnectors.s3.transferutility.TransferState
+import org.jetbrains.annotations.NotNull
+import java.io.File
 import java.io.IOException
 import java.io.InterruptedIOException
+import java.io.UnsupportedEncodingException
 import java.net.SocketTimeoutException
-import java.net.UnknownHostException
+
 
 class AmazonS3CognitoPlugin private constructor(private val context: Context) : MethodCallHandler {
     // read config from awsconfiguration.json in android/app/src/<env>/res/raw/,
@@ -26,9 +26,12 @@ class AmazonS3CognitoPlugin private constructor(private val context: Context) : 
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
+            val context = registrar.context()
             val channel = MethodChannel(registrar.messenger(), "amazon_s3_cognito")
             val instance = AmazonS3CognitoPlugin(registrar.context())
             channel.setMethodCallHandler(instance)
+
+            context.startService(Intent(context, TransferService::class.java))
         }
     }
 
