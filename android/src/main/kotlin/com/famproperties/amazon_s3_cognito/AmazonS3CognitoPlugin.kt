@@ -1,6 +1,7 @@
 package com.famproperties.amazon_s3_cognito
 
 import android.content.Context
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import android.content.Intent
 import com.amazonaws.mobile.config.AWSConfiguration
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferService
@@ -17,22 +18,43 @@ import java.io.UnsupportedEncodingException
 import java.net.SocketTimeoutException
 
 
-class AmazonS3CognitoPlugin private constructor(private val context: Context) : MethodCallHandler {
-    // read config from awsconfiguration.json in android/app/src/<env>/res/raw/,
-    // where <env> is one of dev, qa, uat, or prod.
-    private val awsConfig = AWSConfiguration(context)
+class AmazonS3CognitoPlugin: FlutterPlugin, MethodCallHandler {
     private var awsHelper: AwsHelper? = null
 
+    private lateinit var channel : MethodChannel
+    private lateinit var context: Context
+
     companion object {
+        // read config from awsconfiguration.json in android/app/src/<env>/res/raw/,
+        // where <env> is one of dev, qa, uat, or prod.
+        private lateinit var awsConfig: AWSConfiguration
+
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val context = registrar.context()
             val channel = MethodChannel(registrar.messenger(), "amazon_s3_cognito")
-            val instance = AmazonS3CognitoPlugin(registrar.context())
-            channel.setMethodCallHandler(instance)
+            val context = registrar.context()
 
+            channel.setMethodCallHandler(AmazonS3CognitoPlugin())
+            init(context)
+        }
+
+        @JvmStatic
+        fun init(context: Context) {
+            awsConfig = AWSConfiguration(context)
             context.startService(Intent(context, TransferService::class.java))
         }
+    }
+
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "amazon_s3_cognito")
+        context = flutterPluginBinding.applicationContext
+
+        channel.setMethodCallHandler(this)
+        init(context)
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        channel.setMethodCallHandler(null)
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
